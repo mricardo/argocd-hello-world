@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world
+  template:
+    metadata:
+      labels:
+        app: hello-world
+    spec:
+      containers:
+      - name: prometheus-app
+        image: quay.io/brancz/prometheus-example-app:v0.3.0
+        ports:
+        - containerPort: 8080
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world-svc
+  namespace: monitoring
+  labels:
+    app: hello-world
+    release: local-stack
+spec:
+  selector:
+    app: hello-world
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hello-world-monitor
+  namespace: monitoring
+  labels:
+    release: local-stack
+spec:
+  selector:
+    matchLabels:
+      app: hello-world
+  endpoints:
+  - port: http
